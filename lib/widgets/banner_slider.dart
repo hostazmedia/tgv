@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../services/remote_config_service.dart';
 import '../screens/webview_screen.dart';
 
 class BannerSlider extends StatefulWidget {
@@ -13,9 +14,10 @@ class _BannerSliderState extends State<BannerSlider> {
   late PageController _pageController;
   int _currentPage = 0;
   Timer? _autoScrollTimer;
+  bool _isLoading = true;
 
-  // Static banners - ảnh local + link WebView
-  static const List<Map<String, String>> _banners = [
+  // Fallback local banners
+  static const List<Map<String, String>> _localBanners = [
     {
       'image': 'assets/banner_1.png',
       'link': 'https://tgv.com.vn',
@@ -34,13 +36,26 @@ class _BannerSliderState extends State<BannerSlider> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    _startAutoScroll();
+    _loadRemoteBanners();
   }
+
+  Future<void> _loadRemoteBanners() async {
+    await RemoteConfigService.fetchConfig();
+    if (mounted) {
+      setState(() => _isLoading = false);
+      _startAutoScroll();
+    }
+  }
+
+  bool get _useRemote => RemoteConfigService.banners.isNotEmpty;
+
+  int get _bannerCount =>
+      _useRemote ? RemoteConfigService.banners.length : _localBanners.length;
 
   void _startAutoScroll() {
     _autoScrollTimer = Timer.periodic(const Duration(seconds: 4), (_) {
       if (_pageController.hasClients) {
-        final next = (_currentPage + 1) % _banners.length;
+        final next = (_currentPage + 1) % _bannerCount;
         _pageController.animateToPage(
           next,
           duration: const Duration(milliseconds: 500),
@@ -59,22 +74,71 @@ class _BannerSliderState extends State<BannerSlider> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const SizedBox(
+        height: 200,
+        child: Center(child: CircularProgressIndicator(color: Color(0xFFC8A951))),
+      );
+    }
+
     return Column(
       children: [
         SizedBox(
           height: 200,
           child: PageView.builder(
             controller: _pageController,
-            itemCount: _banners.length,
+            itemCount: _bannerCount,
             onPageChanged: (index) => setState(() => _currentPage = index),
             itemBuilder: (context, index) {
-              final banner = _banners[index];
+              // Determine image widget and link
+              final String linkUrl;
+              final Widget imageWidget;
+
+              if (_useRemote) {
+                final remoteBanner = RemoteConfigService.banners[index];
+                linkUrl = remoteBanner.linkUrl;
+                imageWidget = Image.network(
+                  remoteBanner.imageUrl,
+                  fit: BoxFit.fitWidth,
+                  width: double.infinity,
+                  height: 200,
+                  alignment: Alignment.center,
+                  loadingBuilder: (context, child, progress) {
+                    if (progress == null) return child;
+                    return const Center(
+                      child: CircularProgressIndicator(color: Color(0xFFC8A951)),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    // Fallback to local if remote image fails
+                    final fallbackIndex = index < _localBanners.length ? index : 0;
+                    return Image.asset(
+                      _localBanners[fallbackIndex]['image']!,
+                      fit: BoxFit.fitWidth,
+                      width: double.infinity,
+                      height: 200,
+                      alignment: Alignment.center,
+                    );
+                  },
+                );
+              } else {
+                final localBanner = _localBanners[index];
+                linkUrl = localBanner['link']!;
+                imageWidget = Image.asset(
+                  localBanner['image']!,
+                  fit: BoxFit.fitWidth,
+                  width: double.infinity,
+                  height: 200,
+                  alignment: Alignment.center,
+                );
+              }
+
               return GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => WebViewScreen(url: banner['link']!),
+                      builder: (_) => WebViewScreen(url: linkUrl),
                     ),
                   );
                 },
@@ -92,13 +156,7 @@ class _BannerSliderState extends State<BannerSlider> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      banner['image']!,
-                      fit: BoxFit.fitWidth,
-                      width: double.infinity,
-                      height: 200,
-                      alignment: Alignment.center,
-                    ),
+                    child: imageWidget,
                   ),
                 ),
               );
@@ -111,7 +169,7 @@ class _BannerSliderState extends State<BannerSlider> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
-              _banners.length,
+              _bannerCount,
               (index) => AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 margin: const EdgeInsets.symmetric(horizontal: 3),
