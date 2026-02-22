@@ -1,0 +1,3 @@
+-keep class io.flutter.plugins.webviewflutter.** { *; }
+-keep class android.webkit.** { *; }
+-dontwarn io.flutter.plugins.webviewflutter.**
