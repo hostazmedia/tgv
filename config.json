@@ -1,20 +1,20 @@
 {
     "banners": [
         {
-            "image_url": "https://raw.githubusercontent.com/lylyharper-a11y/tgv/main/remote_assets/banner_1.png",
+            "image_url": "https://raw.githubusercontent.com/hostazmedia/tgv/main/remote_assets/banner_1.png",
             "link_url": "https://tgv.com.vn",
             "title": "TGV - Nơi cuộc sống An Bình & Thịnh Vượng"
         },
         {
-            "image_url": "https://raw.githubusercontent.com/lylyharper-a11y/tgv/main/remote_assets/banner_2.png",
+            "image_url": "https://raw.githubusercontent.com/hostazmedia/tgv/main/remote_assets/banner_2.png",
             "link_url": "https://tgv.com.vn/du-an/tgv-ha-long-p7",
             "title": "Sắc Màu Times Garden Hạ Long"
         },
         {
-            "image_url": "https://raw.githubusercontent.com/lylyharper-a11y/tgv/main/remote_assets/banner_3.png",
+            "image_url": "https://raw.githubusercontent.com/hostazmedia/tgv/main/remote_assets/banner_3.png",
             "link_url": "https://tgv.com.vn/du-an",
             "title": "Times Garden Vĩnh Yên Residences"
         }
     ],
-    "logo_url": "https://raw.githubusercontent.com/lylyharper-a11y/tgv/main/remote_assets/tgv_logo.png"
+    "logo_url": "https://raw.githubusercontent.com/hostazmedia/tgv/main/remote_assets/tgv_logo.png"
 }

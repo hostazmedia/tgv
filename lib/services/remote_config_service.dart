@@ -5,7 +5,7 @@ import '../models/banner_item.dart';
 class RemoteConfigService {
   // Thay bằng raw GitHub URL của bạn
   static const String _configUrl =
-      'https://raw.githubusercontent.com/lylyharper-a11y/tgv/main/config.json';
+      'https://raw.githubusercontent.com/hostazmedia/tgv/main/config.json';
 
   static List<BannerItem> _banners = [];
   static String _logoUrl = '';
