@@ -37,6 +37,17 @@ class TGVApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF5F5F5),
       ),
+      builder: (context, child) {
+        return Container(
+          color: const Color(0xFF1A1A2E), // Dark background on sides
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: child,
+            ),
+          ),
+        );
+      },
       home: const MainNavigation(),
     );
   }
