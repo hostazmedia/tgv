@@ -20,15 +20,15 @@ class _BannerSliderState extends State<BannerSlider> {
   static const List<Map<String, String>> _localBanners = [
     {
       'image': 'assets/banner_1.png',
-      'link': 'https://play.tgv88.live',
+      'link': 'https://tgv.com.vn',
     },
     {
       'image': 'assets/banner_2.png',
-      'link': 'https://play.tgv88.live',
+      'link': 'https://tgv.com.vn',
     },
     {
       'image': 'assets/banner_3.png',
-      'link': 'https://play.tgv88.live',
+      'link': 'https://tgv.com.vn',
     },
   ];
 
