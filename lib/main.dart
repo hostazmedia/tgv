@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'screens/home_screen.dart';
 import 'screens/projects_screen.dart';
@@ -38,19 +37,6 @@ class TGVApp extends StatelessWidget {
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF5F5F5),
       ),
-      builder: kIsWeb
-          ? (context, child) {
-              return Container(
-                color: const Color(0xFF1A1A2E),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 430),
-                    child: child,
-                  ),
-                ),
-              );
-            }
-          : null,
       home: const MainNavigation(),
     );
   }

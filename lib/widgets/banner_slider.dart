@@ -24,11 +24,11 @@ class _BannerSliderState extends State<BannerSlider> {
     },
     {
       'image': 'assets/banner_2.png',
-      'link': 'https://tgv.com.vn',
+      'link': 'https://tgv.com.vn/du-an/tgv-ha-long-p7',
     },
     {
       'image': 'assets/banner_3.png',
-      'link': 'https://tgv.com.vn',
+      'link': 'https://tgv.com.vn/du-an',
     },
   ];
 
