@@ -5,6 +5,8 @@ import 'screens/projects_screen.dart';
 import 'screens/news_screen.dart';
 import 'screens/recruitment_screen.dart';
 import 'screens/contact_screen.dart';
+import 'screens/utilities_screen.dart';
+import 'screens/search_screen.dart';
 import 'services/remote_config_service.dart';
 
 void main() async {
@@ -56,7 +58,7 @@ class _MainNavigationState extends State<MainNavigation> {
     HomeScreen(),
     ProjectsScreen(),
     NewsScreen(),
-    RecruitmentScreen(),
+    UtilitiesScreen(),
     ContactScreen(),
   ];
 
@@ -64,7 +66,7 @@ class _MainNavigationState extends State<MainNavigation> {
     'TGV',
     'Dự án',
     'Tin tức',
-    'Tuyển dụng',
+    'Tiện ích',
     'Liên hệ',
   ];
 
@@ -91,6 +93,24 @@ class _MainNavigationState extends State<MainNavigation> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(
+                    title: const Text('Tìm kiếm'),
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF264653),
+                  ),
+                  body: const SearchScreen(),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: _screens[_currentIndex],
       bottomNavigationBar: Container(
@@ -128,9 +148,9 @@ class _MainNavigationState extends State<MainNavigation> {
               label: 'Tin tức',
             ),
             NavigationDestination(
-              icon: Icon(Icons.work_outline),
-              selectedIcon: Icon(Icons.work, color: Color(0xFF264653)),
-              label: 'Tuyển dụng',
+              icon: Icon(Icons.apps_outlined),
+              selectedIcon: Icon(Icons.apps, color: Color(0xFF264653)),
+              label: 'Tiện ích',
             ),
             NavigationDestination(
               icon: Icon(Icons.call_outlined),
