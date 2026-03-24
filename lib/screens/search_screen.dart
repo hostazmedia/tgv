@@ -28,7 +28,8 @@ class _SearchScreenState extends State<SearchScreen> {
     final results = <dynamic>[];
 
     if (_filter != 'Dự án') {
-      results.addAll(newsArticles.where((a) =>
+      final articles = NewsData.getArticles();
+      results.addAll(articles.where((a) =>
           a.title.toLowerCase().contains(q) || a.summary.toLowerCase().contains(q)));
     }
     if (_filter != 'Tin tức') {
