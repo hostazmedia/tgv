@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../data/project_data.dart';
+import '../models/project.dart';
+import '../services/favorites_service.dart';
 import 'calculator_screen.dart';
 import 'booking_screen.dart';
+import 'project_detail_screen.dart';
 
 class UtilitiesScreen extends StatelessWidget {
   const UtilitiesScreen({super.key});
@@ -76,13 +81,13 @@ class UtilitiesScreen extends StatelessWidget {
           const Text('Các công cụ hữu ích giúp bạn tìm kiếm và quyết định mua bất động sản phù hợp.',
               style: TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(height: 16),
-          ...utilities.map((u) => _buildUtilityCard(u, context)),
+          ...utilities.map((u) => _buildUtilityCard(u)),
         ],
       ),
     );
   }
 
-  Widget _buildUtilityCard(_UtilityItem item, BuildContext context) {
+  Widget _buildUtilityCard(_UtilityItem item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -116,33 +121,96 @@ class _UtilityItem {
   const _UtilityItem({required this.icon, required this.iconColor, required this.bgColor, required this.title, required this.subtitle, required this.onTap});
 }
 
-// Favorites list screen
-class _FavoritesListScreen extends StatelessWidget {
+// Favorites list screen — shows actually saved projects
+class _FavoritesListScreen extends StatefulWidget {
   const _FavoritesListScreen();
+  @override
+  State<_FavoritesListScreen> createState() => _FavoritesListScreenState();
+}
+
+class _FavoritesListScreenState extends State<_FavoritesListScreen> {
+  List<Project> _favorites = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    final ids = await FavoritesService.getFavorites();
+    final allProjects = ProjectData.getProjects();
+    setState(() {
+      _favorites = allProjects.where((p) => ids.contains(p.id)).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Dự án yêu thích'), backgroundColor: Colors.white, foregroundColor: const Color(0xFF264653)),
       backgroundColor: const Color(0xFFF5F5F5),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.favorite_outline, size: 64, color: Colors.grey[300]),
-            const SizedBox(height: 16),
-            const Text('Chưa có dự án yêu thích', style: TextStyle(color: Colors.grey)),
-            const SizedBox(height: 8),
-            const Text('Nhấn vào biểu tượng ♡ trên trang dự án để lưu', style: TextStyle(color: Colors.grey, fontSize: 13)),
-          ],
-        ),
-      ),
+      body: _favorites.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.favorite_outline, size: 64, color: Colors.grey[300]),
+                  const SizedBox(height: 16),
+                  const Text('Chưa có dự án yêu thích', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  const Text('Nhấn vào biểu tượng ♡ trên trang dự án để lưu', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                ],
+              ),
+            )
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: _favorites.length,
+              itemBuilder: (ctx, i) {
+                final p = _favorites[i];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    leading: Container(
+                      width: 48, height: 48,
+                      decoration: BoxDecoration(color: const Color(0xFFE3EFF2), borderRadius: BorderRadius.circular(12)),
+                      child: Text(p.imageEmoji, textAlign: TextAlign.center, style: const TextStyle(fontSize: 24)),
+                    ),
+                    title: Text(p.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    subtitle: Text(p.location),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => Navigator.push(ctx, MaterialPageRoute(builder: (_) => ProjectDetailScreen(project: p))),
+                  ),
+                );
+              },
+            ),
     );
   }
 }
 
-// Map screen - list view with addresses
+// Map screen — opens Google Maps
 class _MapScreen extends StatelessWidget {
   const _MapScreen();
+
+  final _locations = const [
+    {'name': 'TGV Hạ Long', 'address': 'Cột Đồng Hồ, TP. Hạ Long, Quảng Ninh', 'url': 'https://maps.google.com/?q=Times+Garden+Ha+Long,+Quang+Ninh', 'icon': '🏙️'},
+    {'name': 'KDL Ngọa Vân - Hồ Thiên', 'address': 'TX. Đông Triều, Quảng Ninh', 'url': 'https://maps.google.com/?q=Ngoa+Van+Ho+Thien,+Dong+Trieu,+Quang+Ninh', 'icon': '⛪'},
+    {'name': 'Times Garden Vĩnh Yên', 'address': 'TP. Vĩnh Yên, Vĩnh Phúc', 'url': 'https://maps.google.com/?q=Times+Garden+Vinh+Yen', 'icon': '🌳'},
+  ];
+
+  Future<void> _openMap(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -151,57 +219,49 @@ class _MapScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Vị trí các dự án của TGV Times Garden Vietnam', style: TextStyle(color: Colors.grey, fontSize: 14)),
+          const Text('Nhấn vào dự án để xem vị trí trên Google Maps', style: TextStyle(color: Colors.grey, fontSize: 14)),
           const SizedBox(height: 16),
-          _buildLocationCard('TGV Hạ Long', 'TP. Hạ Long, Quảng Ninh', 'Khu đô thị ven biển cao cấp', Icons.apartment),
-          _buildLocationCard('TGV Hà Nội', 'Hà Nội', 'Dự án căn hộ trung tâm thành phố', Icons.location_city),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLocationCard(String name, String location, String desc, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48, height: 48,
-            decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(12)),
-            child: Icon(icon, color: const Color(0xFF2E7D32)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text(location, style: const TextStyle(color: Color(0xFF264653), fontSize: 13)),
-                Text(desc, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-              ],
+          ..._locations.map((loc) => Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
             ),
-          ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
+            child: ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              leading: Container(
+                width: 48, height: 48,
+                decoration: BoxDecoration(color: const Color(0xFFE8F5E9), borderRadius: BorderRadius.circular(12)),
+                child: Center(child: Text(loc['icon']!, style: const TextStyle(fontSize: 24))),
+              ),
+              title: Text(loc['name']!, style: const TextStyle(fontWeight: FontWeight.bold)),
+              subtitle: Text(loc['address']!),
+              trailing: const Icon(Icons.open_in_new, color: Color(0xFF2E7D32)),
+              onTap: () => _openMap(loc['url']!),
+            ),
+          )),
         ],
       ),
     );
   }
 }
 
-// Video screen
+// Video screen — opens YouTube links
 class _VideoScreen extends StatelessWidget {
   const _VideoScreen();
+
   final _videos = const [
-    {'title': 'Video giới thiệu TGV Hạ Long', 'duration': '3:45', 'thumb': 'https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg'},
-    {'title': 'Căn hộ mẫu Times Garden Residences', 'duration': '5:20', 'thumb': 'https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg'},
-    {'title': 'Tiện ích nội khu TGV', 'duration': '2:30', 'thumb': 'https://img.youtube.com/vi/dQw4w9WgXcQ/0.jpg'},
+    {'title': 'TGV Hạ Long - Tổng quan dự án', 'duration': '3:45', 'url': 'https://www.youtube.com/@TGVTimesGardenVietnam'},
+    {'title': 'Times Garden Ha Long Residences', 'duration': '5:20', 'url': 'https://www.youtube.com/@TGVTimesGardenVietnam'},
+    {'title': 'Tiện ích nội khu TGV', 'duration': '2:30', 'url': 'https://www.youtube.com/@TGVTimesGardenVietnam'},
   ];
+
+  Future<void> _openVideo(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -215,33 +275,46 @@ class _VideoScreen extends StatelessWidget {
           final v = _videos[i];
           return Container(
             margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: Container(
-                    height: 180,
-                    color: const Color(0xFF264653),
-                    child: const Center(child: Icon(Icons.play_circle_outline, color: Colors.white, size: 64)),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text(v['title']!, style: const TextStyle(fontWeight: FontWeight.w600))),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8)),
-                        child: Text(v['duration']!, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+            decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+            ),
+            child: InkWell(
+              onTap: () => _openVideo(v['url']!),
+              borderRadius: BorderRadius.circular(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    child: Container(
+                      height: 180, color: const Color(0xFF264653),
+                      child: Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          const Icon(Icons.play_circle_outline, color: Colors.white, size: 64),
+                          Positioned(bottom: 8, right: 8,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(color: Colors.black87, borderRadius: BorderRadius.circular(4)),
+                              child: Text(v['duration']!, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Expanded(child: Text(v['title']!, style: const TextStyle(fontWeight: FontWeight.w600))),
+                        const Icon(Icons.open_in_new, size: 16, color: Colors.grey),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -264,6 +337,7 @@ class _FAQScreenState extends State<_FAQScreen> {
     {'q': 'Tiện ích nội khu bao gồm những gì?', 'a': 'Mỗi dự án TGV đều có: hồ bơi, phòng gym, khu vui chơi trẻ em, công viên nội khu, siêu thị, trường học và bệnh viện trong khu vực.'},
     {'q': 'Chính sách bảo hành căn hộ?', 'a': 'TGV bảo hành kết cấu chịu lực 60 tháng, hệ thống điện nước và thiết bị 12-24 tháng từ ngày bàn giao.'},
     {'q': 'Làm thế nào để đặt lịch tham quan?', 'a': 'Bạn có thể đặt lịch trực tiếp trong app tại mục "Đặt lịch tham quan", hoặc gọi hotline (+84) 024 6282 1206, chuyên viên sẽ hỗ trợ bạn 24/7.'},
+    {'q': 'Có thể lưu dự án yêu thích như thế nào?', 'a': 'Vào trang chi tiết của bất kỳ dự án nào, nhấn vào biểu tượng ♡ ở góc trên bên phải. Dự án sẽ được lưu vào danh sách "Dự án yêu thích" trong tab Tiện ích.'},
   ];
 
   int? _expanded;
@@ -280,11 +354,12 @@ class _FAQScreenState extends State<_FAQScreen> {
           final faq = _faqs[i];
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)]),
+            decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(12),
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+            ),
             child: ExpansionTile(
               onExpansionChanged: (v) => setState(() => _expanded = v ? i : null),
-              initiallyExpanded: _expanded == i,
               title: Text(faq['q']!, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
               children: [
                 Padding(

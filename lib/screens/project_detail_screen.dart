@@ -1,10 +1,44 @@
 import 'package:flutter/material.dart';
 import '../models/project.dart';
+import '../services/favorites_service.dart';
+import 'booking_screen.dart';
 
-class ProjectDetailScreen extends StatelessWidget {
+class ProjectDetailScreen extends StatefulWidget {
   final Project project;
 
   const ProjectDetailScreen({super.key, required this.project});
+
+  @override
+  State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
+}
+
+class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
+  bool _isFavorite = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorite();
+  }
+
+  Future<void> _loadFavorite() async {
+    final fav = await FavoritesService.isFavorite(widget.project.id);
+    if (mounted) setState(() => _isFavorite = fav);
+  }
+
+  Future<void> _toggleFavorite() async {
+    await FavoritesService.toggleFavorite(widget.project.id);
+    final fav = await FavoritesService.isFavorite(widget.project.id);
+    if (mounted) {
+      setState(() => _isFavorite = fav);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isFavorite ? 'Đã lưu vào danh sách yêu thích' : 'Đã xóa khỏi danh sách yêu thích'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,10 +50,20 @@ class ProjectDetailScreen extends StatelessWidget {
             pinned: true,
             backgroundColor: const Color(0xFF264653),
             foregroundColor: Colors.white,
+            actions: [
+              IconButton(
+                icon: Icon(
+                  _isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: _isFavorite ? Colors.red : Colors.white,
+                ),
+                tooltip: _isFavorite ? 'Bỏ yêu thích' : 'Lưu yêu thích',
+                onPressed: _toggleFavorite,
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
-              background: project.imageAsset.isNotEmpty
+              background: widget.project.imageAsset.isNotEmpty
                   ? Image.asset(
-                      project.imageAsset,
+                      widget.project.imageAsset,
                       fit: BoxFit.cover,
                       width: double.infinity,
                     )
@@ -32,7 +76,7 @@ class ProjectDetailScreen extends StatelessWidget {
                         ),
                       ),
                       child: Center(
-                        child: Text(project.imageEmoji,
+                        child: Text(widget.project.imageEmoji,
                             style: const TextStyle(fontSize: 80)),
                       ),
                     ),
@@ -45,7 +89,7 @@ class ProjectDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    project.title,
+                    widget.project.title,
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -54,7 +98,7 @@ class ProjectDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    project.subtitle,
+                    widget.project.subtitle,
                     style: TextStyle(
                       fontSize: 15,
                       color: Colors.grey.shade500,
@@ -67,7 +111,7 @@ class ProjectDetailScreen extends StatelessWidget {
                           size: 16, color: Colors.grey.shade600),
                       const SizedBox(width: 4),
                       Text(
-                        project.location,
+                        widget.project.location,
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade600,
@@ -82,7 +126,7 @@ class ProjectDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          project.status,
+                          widget.project.status,
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFFC8A951),
@@ -103,7 +147,7 @@ class ProjectDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    project.description,
+                    widget.project.description,
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey.shade700,
@@ -111,7 +155,7 @@ class ProjectDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  if (project.features.isNotEmpty) ...[
+                  if (widget.project.features.isNotEmpty) ...[
                     const Text(
                       'Tiện ích nổi bật',
                       style: TextStyle(
@@ -124,7 +168,7 @@ class ProjectDetailScreen extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: project.features
+                      children: widget.project.features
                           .map((f) => Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 14, vertical: 8),
@@ -155,7 +199,36 @@ class ProjectDetailScreen extends StatelessWidget {
                               ))
                           .toList(),
                     ),
+                    const SizedBox(height: 24),
                   ],
+                  // Booking CTA
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => Scaffold(
+                            appBar: AppBar(
+                              title: const Text('Đặt lịch tham quan'),
+                              backgroundColor: Colors.white,
+                              foregroundColor: const Color(0xFF264653),
+                            ),
+                            body: BookingScreen(projectName: widget.project.title),
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.calendar_today),
+                      label: const Text('Đặt lịch tham quan'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF264653),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 30),
                 ],
               ),
