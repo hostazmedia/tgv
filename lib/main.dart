@@ -7,6 +7,7 @@ import 'screens/recruitment_screen.dart';
 import 'screens/contact_screen.dart';
 import 'screens/utilities_screen.dart';
 import 'screens/search_screen.dart';
+import 'screens/resident_portal_screen.dart';
 import 'services/remote_config_service.dart';
 
 void main() async {
@@ -59,7 +60,7 @@ class _MainNavigationState extends State<MainNavigation> {
     ProjectsScreen(),
     NewsScreen(),
     UtilitiesScreen(),
-    ContactScreen(),
+    ResidentPortalScreen(),
   ];
 
   final _titles = const [
@@ -67,7 +68,7 @@ class _MainNavigationState extends State<MainNavigation> {
     'Dự án',
     'Tin tức',
     'Tiện ích',
-    'Liên hệ',
+    'Cư dân',
   ];
 
   @override
@@ -153,9 +154,9 @@ class _MainNavigationState extends State<MainNavigation> {
               label: 'Tiện ích',
             ),
             NavigationDestination(
-              icon: Icon(Icons.call_outlined),
-              selectedIcon: Icon(Icons.call, color: Color(0xFF264653)),
-              label: 'Liên hệ',
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person, color: Color(0xFF264653)),
+              label: 'Cư dân',
             ),
           ],
         ),
