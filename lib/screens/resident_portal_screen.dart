@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ResidentPortalScreen extends StatefulWidget {
   const ResidentPortalScreen({super.key});
@@ -9,17 +10,40 @@ class ResidentPortalScreen extends StatefulWidget {
 
 class _ResidentPortalScreenState extends State<ResidentPortalScreen> {
   bool _isLoggedIn = false;
+  bool _isLoading = true;
+  String _roomCode = '';
   final _roomController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void _login() {
+  @override
+  void initState() {
+    super.initState();
+    _loadLoginState();
+  }
+
+  Future<void> _loadLoginState() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isLoggedIn = prefs.getBool('resident_logged_in') ?? false;
+      _roomCode = prefs.getString('resident_room_code') ?? '';
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _login() async {
     if (_roomController.text.isNotEmpty && _passwordController.text.isNotEmpty) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('resident_logged_in', true);
+      await prefs.setString('resident_room_code', _roomController.text);
       setState(() {
         _isLoggedIn = true;
+        _roomCode = _roomController.text;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đăng nhập thành công')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đăng nhập thành công')),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vui lòng nhập Mã căn hộ và Mật khẩu')),
@@ -27,9 +51,13 @@ class _ResidentPortalScreenState extends State<ResidentPortalScreen> {
     }
   }
 
-  void _logout() {
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('resident_logged_in', false);
+    await prefs.remove('resident_room_code');
     setState(() {
       _isLoggedIn = false;
+      _roomCode = '';
       _roomController.clear();
       _passwordController.clear();
     });
@@ -37,6 +65,11 @@ class _ResidentPortalScreenState extends State<ResidentPortalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     return _isLoggedIn ? _buildDashboard() : _buildLogin();
   }
 
@@ -127,7 +160,7 @@ class _ResidentPortalScreenState extends State<ResidentPortalScreen> {
                 children: [
                   const Text('Xin chào cư dân,', style: TextStyle(color: Colors.grey)),
                   Text(
-                    'Căn hộ ${_roomController.text.toUpperCase()}',
+                    'Căn hộ ${_roomCode.toUpperCase()}',
                     style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF264653)),
                   ),
                 ],
